@@ -1,8 +1,8 @@
-imgMode: 'gray'
+imgMode: 'gray' # 'color' or 'gray'
+
+camPath: "/dev/video6"
 
 resolution:
-  width: 1920
-  height: 1080
-
-camPath: "/dev/video6"    
-
+  width: 640
+  height: 480
+  # TODO: add how to get the supported resolutions

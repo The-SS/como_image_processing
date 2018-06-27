@@ -605,7 +605,7 @@ class lineDataPublisher:
         return
     def publish_data(self):
         '''
-        publishes line data to /lineData topic
+        publishes line data to /line_data topic
         '''
         ang = self.line_orientation [:]
         pos = self.line_center_position [:]
