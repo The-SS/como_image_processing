@@ -49,12 +49,13 @@ cd <path>
 git clone https://github.com/The-SS/como_image_processing.git
 ```
 
-2. If the package is to be used alone, build the package using catkin make or catkin build. For example:
+2. Build the package.
+  - If the package is to be used alone, build the package using catkin make or catkin build. For example:
 ```
 cd <path>/como_image_processing
 catkin build
 ```
-If the package is part of another package, build the main package. For example, if this is used with the [Como package](https://github.com/TSummersLab/como), run the following in terminal:
+ - If the package is part of another package, build the main package. For example, if this is used with the [Como package](https://github.com/TSummersLab/como), run the following in terminal:
 ```
 cd ~/como/workspace
 catkin_make
