@@ -26,7 +26,7 @@ from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
 
 from img_processing_functions import *
-from image_processing.msg import *
+from como_image_processing.msg import LineData
 
 
 '''
