@@ -1,0 +1,12 @@
+<!-- Sleiman Safaoui
+    June 26, 2018
+  -->
+
+<!-- Launch file to start cam_bridge.py  -->
+
+<launch>
+  <!-- Start cam_bridge -->
+  <node pkg="como_image_processing" type="cam_bridge.py" name="cam_bridge" output="screen" respawn="true">
+    <rosparam command="load" file="$(find como_image_processing)/config/cam_bridge_params.yml"/>
+  </node>
+</launch>

@@ -1,0 +1,8 @@
+imgMode: 'gray'
+
+resolution:
+  width: 1920
+  height: 1080
+
+camPath: "/dev/video6"    
+
