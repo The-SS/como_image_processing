@@ -18,9 +18,9 @@ For the package to operate, the following assumptions are made:
 - The package is used on a Linux platform (Ubuntu, Linux Mate, ...)
 - A checkerboard is available.
 - Video for Linux is installed. If not installed, run the following command in terminal:
-```
-sudo apt-get install v4l-utils
-```
+    ```
+    sudo apt-get install v4l-utils
+    ```
 - The camera is mounted on the car such that it is pointing forward (its optical axis makes some angle (e.g. 90 degree) with the gravity vector)
 - When using a checkerboard, the checkerboard is centered horizontally in the camera's field of view. The top and bottom edges of the checkerboard must be as parallel as possible with the image top and bottom edges.
 - When recalibrating (detecting the corners of the checkerboard), the checkerboard is always placed at the same distance from the image. If that is not the case, refer to the [Usage](#usage) section for the required modifications.
@@ -44,22 +44,22 @@ The package is organized as follows
 To use the package, follow these instructions:
 
 1. Clone the package to the desired directory. We will refer to that directory as `<path>`. (i.e. when cloning the package in home `<path>` is `~`).
-```
-cd <path>
-git clone https://github.com/The-SS/como_image_processing.git
-```
+    ```
+    cd <path>
+    git clone https://github.com/The-SS/como_image_processing.git
+    ```
 
 2. Build the package.
     - If the package is to be used alone, build the package using catkin make or catkin build. For example:
-```
-cd <path>/como_image_processing
-catkin build
-```
+    ```
+    cd <path>/como_image_processing
+    catkin build
+    ```
    - If the package is part of another package, build the main package. For example, if this is used with the [Como package](https://github.com/TSummersLab/como), run the following in terminal:
-```
-cd ~/como/workspace
-catkin_make
-```
+    ```
+    cd ~/como/workspace
+    catkin_make
+    ```
 
 3. Modify `<path>/como_image_processing/config/corners.txt`.
     - The text file contains 5 lines:
@@ -104,9 +104,9 @@ catkin_make
                 - Choose the values for height and width from that list.
 
 5. Modify  `<path>/como_image_processing/config/img_preprocessing_params.yml`.
-  - The file contains data about the checkerboard size which are used in preprocessing the image (splitting image).
-  - Count the number of internal corners of the checkerboard, both vertically and horizontally. For example, if the checkerboard has 6 horizontal rows of boxes and 8 vertical rows of boxes, the number of internal corners would be 5 horizontally and 7 vertically.
-  - Fill in that data in `CheckerboardParams` as explained in the file.
+    - The file contains data about the checkerboard size which are used in preprocessing the image (splitting image).
+    - Count the number of internal corners of the checkerboard, both vertically and horizontally. For example, if the checkerboard has 6 horizontal rows of boxes and 8 vertical rows of boxes, the number of internal corners would be 5 horizontally and 7 vertically.
+    - Fill in that data in `CheckerboardParams` as explained in the file.
 
 6. Modify `<path>/como_image_processing/config/process_line_params.yml`.
    - The file contains data used when processing the line image.
@@ -125,7 +125,10 @@ catkin_make
         - `car_body_frame_to_board` is the distance between the chosen origin for the body frame of the car and the horizontal line passing through the two outer corners of the checkerboard that are closest to the car. When placing the checkerboard, measure this value then replace the current value. If the checkerboard is moved in the next calibration, this value should be Modified.
 
 7. Run a launch file:
-    - The above modifications need to be done once (unless changes are made to the checkerboard, calibration, line, or similar parameter that are generally unchanged). Once the modifications are made and the package is setup, users can run a launch file to start the package. This is done by running the following in a terminal window: `roslaunch como_image_processing <package>`.
+    - The above modifications need to be done once (unless changes are made to the checkerboard, calibration, line, or similar parameter that are generally unchanged). Once the modifications are made and the package is setup, users can run a launch file to start the package. This is done by running the following in a terminal window: 
+    ```
+    roslaunch como_image_processing <package>
+    ```
     - In the above command, replace`<package>` by one of the following options:
       - `cam_bridge.launch`:
         - Starts `cam_bridge.py` which fetches an image and publishes it to `/cam/raw`
