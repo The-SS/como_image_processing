@@ -43,22 +43,17 @@ The package is organized as follows
 ## Usage
 To use the package, follow these instructions:
 
-1. Clone the package to the desired directory. We will refer to that directory as `<path>`. (i.e. when cloning the package in home `<path>` is `~`).
+1. Clone the package to the desired workspace (e.g. `~/workspace/src` where `catkin_make` or `catkin build` is invoked in `workspace`). We will refer to that workspace as `<path>`.
     ```
-    cd <path>
+    cd <path>/src
     git clone https://github.com/The-SS/como_image_processing.git
     ```
 
-2. Build the package.
-    - If the package is to be used alone, build the package using catkin make or catkin build. For example:
+2. Build the package and source it.
     ```
-    cd <path>/como_image_processing
-    catkin build
-    ```
-   - If the package is part of another package, build the main package. For example, if this is used with the [Como package](https://github.com/TSummersLab/como), run the following in terminal:
-    ```
-    cd ~/como/workspace
-    catkin_make
+    cd <path>
+    catkin build # or catkin_make
+    source devel/setup.bash
     ```
 
 3. Modify `<path>/como_image_processing/config/corners.txt`.
@@ -125,7 +120,7 @@ To use the package, follow these instructions:
         - `car_body_frame_to_board` is the distance between the chosen origin for the body frame of the car and the horizontal line passing through the two outer corners of the checkerboard that are closest to the car. When placing the checkerboard, measure this value then replace the current value. If the checkerboard is moved in the next calibration, this value should be Modified.
 
 7. Run a launch file:
-    - The above modifications need to be done once (unless changes are made to the checkerboard, calibration, line, or similar parameter that are generally unchanged). Once the modifications are made and the package is setup, users can run a launch file to start the package. This is done by running the following in a terminal window: 
+    - The above modifications need to be done once (unless changes are made to the checkerboard, calibration, line, or similar parameter that are generally unchanged). Once the modifications are made and the package is setup, users can run a launch file to start the package. This is done by running the following in a terminal window:
     ```
     roslaunch como_image_processing <package>
     ```
