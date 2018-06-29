@@ -89,7 +89,8 @@ class imgFetcher:
         callback for getting an image
         '''
         if self.img_encoding == '':
-            print('Image encoding not defined. Cannot fetch image')
+            #print('Image encoding not defined. Cannot fetch image')
+            rospy.logfatal('Image encoding not defined. Cannot fetch image')
             return
         # with valid image mode
         try:
@@ -98,6 +99,7 @@ class imgFetcher:
         except cvBridgeError as e:
             self.img = []
             self.img_indicator = -1
+            rospy.logerr(e)
             print(e)
         return
     def get_img(self):
@@ -150,19 +152,23 @@ class lineProcessor:
         self.checkerboard_setup_correct = False # check to see if checkerboard size data imported to self is correct or not (False --> no, True --> yes)
     def set_param(self, threshold, width_line, width_gain, arrow_scale):
         if ((threshold < 0) | (threshold > 255)):
-            print('Invalid threshold')
+            rospy.logfatal('Invalid threshold')
+            #print('Invalid threshold')
             self.param_update = False
             return
         if (width_line < 0):
-            print('Invalid line width')
+            rospy.logfatal('Invalid line width')
+            #print('Invalid line width')
             self.param_update = False
             return
         if (width_gain < 0):
-            print('Invalid width gain')
+            rospy.logfatal('Invalid width gain')
+            #print('Invalid width gain')
             self.param_update = False
             return
         if (arrow_scale < 0):
-            print('Invalid arrow scale')
+            rospy.logfatal('Invalid arrow scale')
+            #print('Invalid arrow scale')
             self.param_update = False
             return
         self.threshold = threshold
@@ -177,18 +183,20 @@ class lineProcessor:
         returns true if image was set, false if image not set
         '''
         if indicator == '':
-            print('No indicator')
+            rospy.logerr('No image indicator')
+            #print('No indicator')
             self.img = []
             self.img_indicator = ''
             return False
 
         if img == []:
-            print('No image')
+            rospy.logerr('No image')
+            #print('No image')
             self,img = []
             self.img_indicator = ''
             return False
 
-        print('Image delivered')
+        #print('Image delivered')
         self.img = img
         self.img_indicator = indicator
         return True
@@ -271,7 +279,6 @@ class lineProcessor:
         line_idx = 0
         for i in range(num_contours):
             if votes[i] == max(votes):
-                print(i)
                 line_idx = i
         return line_idx
     def mask_image(self, cols, rows, contour):
@@ -308,7 +315,8 @@ class lineProcessor:
             return [center_x, center_y], [ang, angd], [x_v1, y_v1]
 
         except: # could not find orientation of line
-            print('failed to find eigenvectors and eigenvalues')
+            rospy.logwarn('Failed to find eigenvectors and eigenvalues')
+            #print('failed to find eigenvectors and eigenvalues')
             y, x = np.nonzero(mask) # get x and y of white pixels
             return [center_x, center_y], [], []
     def process_line_img(self):
@@ -319,23 +327,27 @@ class lineProcessor:
         returns false otherwise
         '''
         if self.param_update == False:
-            print('Please update parameters first')
+            rospy.logwarn('Please update parameters first')
+            #print('Please update parameters first')
             return False
         threshold = self.threshold
         width_line = self.width_line
         width_gain = self.width_gain
         scale = self.arrow_scale
         if self.img == []:
-            print('No image to process')
+            rospy.logwarn('No image to process')
+            #print('No image to process')
             return False
         if self.img_indicator == '':
-            print('Image and indicator not in sync')
+            rospy.logwarn('Image and indicator not in sync')
+            #print('Image and indicator not in sync')
             return False
         # get a gray image from the image
         img_gray, img_gray_indicator = self.color_to_gray(self.img, self.img_indicator)
         # stop if there was a problem with obtaining the gray image
         if img_gray_indicator == '':
-            print('Could not get a gray image')
+            rospy.logerr('Could not generate a gray image')
+            #print('Could not get a gray image')
             return False
         self.img_gray = img_gray.copy()
         self.img_gray_indicator = img_gray_indicator
@@ -343,14 +355,16 @@ class lineProcessor:
         # binarize the image
         img_bw = self.binarize_img(img_gray, threshold)
         if img_bw == []: # if the black and white image is empty, stop
-            print('No black and white image')
+            rospy.logwarn('No black and white image')
+            #print('No black and white image')
             return False
         self.img_bw = img_bw.copy()
 
         # find edges
         img_edges = self.find_edges(img_bw)
         if img_edges == []: # if the black and white image is empty, stop
-            print('No edges')
+            rospy.logwarn('No edges detected')
+            #print('No edges')
             return False
         self.img_edges = img_edges.copy()
 
@@ -370,7 +384,8 @@ class lineProcessor:
         # find contours
         contours = self.find_contours(img_bw)
         if contours == []:
-            print('Invalid contours')
+            rospy.logwarn('No contours detected')
+            #print('Invalid contours')
             return False
 
         img_arrow_gray = self.img_gray.copy() # copy the gray image to draw line on it
@@ -390,7 +405,8 @@ class lineProcessor:
         [center_x, center_y] = center
         self.center = [center_x, center_y]
         if angle == []: # could not find angle
-            print('Could not find angle of the line')
+            rospy.logwarn('Could not find angle of line')
+            #print('Could not find angle of the line')
             return False
         [ang_rad, ang_deg] = angle
         self.angle = [ang_rad, ang_deg]
@@ -419,27 +435,32 @@ class lineProcessor:
         returns true if set, false if not set
         '''
         if car_body_frame_to_board < 0.0:
-            print('Invalid distance to board')
+            rospy.logfatal('Invalid distance to board')
+            #print('Invalid distance to board')
             self.checkerboard_setup_correct = False
             return False
 
         if square_size < 0.0:
-            print('Invalid square size')
+            rospy.logfatal('Invalid square size')
+            #print('Invalid square size')
             self.checkerboard_setup_correct = False
             return False
 
         if horizontal < 2:
-            print('Invalid checkerboard size')
+            rospy.logfatal('Invalid checkerboard size')
+            #print('Invalid checkerboard size')
             self.checkerboard_setup_correct = False
             return False
 
         if horizontal == vertical:
-            print('Checkerboard cannot be square')
+            rospy.logfatal('Checkerboard cannot be square')
+            #print('Checkerboard cannot be square')
             self.checkerboard_setup_correct = False
             return False
 
         if vertical > horizontal:
-            print('Vertical and horizontal dimentions appear to be incorrect. They will be swapped')
+            rospy.logwarn('Vertical and horizontal dimentions appear to be incorrect. They will be swapped')
+            #print('Vertical and horizontal dimentions appear to be incorrect. They will be swapped')
             self.num_horizontal_corners = vertical # number of checkerboard horizontal corners
             self.num_vertical_corners = horizontal # number of checkerboard vertical corners
             self.car_body_frame_to_board = car_body_frame_to_board
@@ -459,24 +480,28 @@ class lineProcessor:
         returns true if file is loaded and false if it could not be loaded/ data invalid
         '''
         if path == "": # no path
-            print('Path no valid')
+            rospy.logfatal('Invalid path to corners.txt')
+            #print('Path no valid')
             self.corners_from_file = []
             return False
 
         data = import_file(path + '/corners.txt') # import data for corners.txt
-        print('Data Loaded:\n', data)
+        #print('Data Loaded:\n', data)
 
         if len(data) != 5: # incorrect data
-            print('File does not contain correct data.')
+            rospy.loginfo('corners.txt does not contain correct data')
+            #print('File does not contain correct data.')
             self.corners_from_file = []
             return False
 
         if ((data[0][0] < 0.5) | (data[0][1] < 0.5)): # do not load data
-            print('File indicates that corner data cannot be used.')
+            rospy.loginfo('File indicates that corner data cannot be used')
+            #print('File indicates that corner data cannot be used.')
             self.corners_from_file = []
             return False
-
-        print('Importing data from file')
+            
+        rospy.loginfo('Importing data from file')
+        #print('Importing data from file')
         self.corners_from_file = data # data is a list of lists. 5*2
 
         return True
@@ -498,13 +523,16 @@ class lineProcessor:
         corners_from_file = self.corners_from_file
 
         if corners_from_file == []:
-            print('No outer corners yet')
+            rospy.logwarn('No outer corners yet')
+            #print('No outer corners yet')
             return False
         if ((corners_from_file[0][0] < 0.5) | (corners_from_file[0][1] < 0.5)):
-            print('Corners need update')
+            rospy.logwarn('Corners need update')
+            #print('Corners need update')
             return False
         if square_size == 0:
-            print('Square size not set yet')
+            rospy.logwarn('Square size not set yet')
+            #print('Square size not set yet')
             return False
         outer_corners = corners_from_file[1:5][:]
         # mapping between pixels and meters
@@ -512,8 +540,8 @@ class lineProcessor:
         num_vertical_checkerboard_squars = num_vertical_checkerboard_corners-1 # internal to the corners only
         (cb_bottom_left, cb_bottom_right, cb_top_right, cb_top_left) = outer_corners
         bottom_corner_to_corner = cb_bottom_right[0] - cb_bottom_left[0]
-        print(' bottom_corner_to_corner',  bottom_corner_to_corner)
-        print('SQR SIZE', square_size)
+        #print(' bottom_corner_to_corner',  bottom_corner_to_corner)
+        #print('SQR SIZE', square_size)
         img_x_ratio_pixles_per_meters = bottom_corner_to_corner / (num_horizontal_checkerboard_squars * square_size) # number of pixels between the bottom two corners of the checkerboard is proportional to the length of that side in meters
         img_y_ratio_pixles_per_meters = rows / (num_vertical_checkerboard_squars * square_size) # the internal squars take up all the height of the image --> ratio = num_rows / (num_sqrs * sqr_size)
         car_body_frame_to_board_p = car_body_frame_to_board * img_y_ratio_pixles_per_meters
@@ -590,12 +618,14 @@ class lineDataPublisher:
         populates the line orientation and line center position variables in self.
         '''
         if ((ang == []) | (pos == [])): # no data inputted
-            print("No data input")
+            rospy.logwarn("No data input")
+            #print("No data input")
             self.line_orientation = []
             self.line_center_position = []
             return
         if ((len(ang) != 2) | (len(pos) != 2)):
-            print("Incorrect data input")
+            rospy.logwarn("Incorrect data input")
+            #print("Incorrect data input")
             self.line_orientation = []
             self.line_center_position = []
             return
@@ -611,7 +641,8 @@ class lineDataPublisher:
         pos = self.line_center_position [:]
 
         if ((self.line_orientation == []) | (self.line_center_position == [])):
-            print("No data to publish")
+            rospy.logwarn("No data to publish")
+            #print("No data to publish")
             return
 
         self.line_data_pub.publish(LineData(ang[0], ang[1], pos[0], pos[1]))
@@ -634,11 +665,12 @@ class imgPublisher:
         returns nothing
         '''
         if indicator == '':
-            print('Img does not have a color mode. Img will be set to []')
+            #print('Img does not have a color mode. Img will be set to []')
+            rospy.logwarn("Img does not have a color mode")
             self.img = []
             self.img_indicator = ''
         else:
-            print('Importing image')
+            #print('Importing image')
             self.img = img
             self.img_indicator = indicator
         return
@@ -648,21 +680,25 @@ class imgPublisher:
         publishes the content of self.img to /cam/orientation_img if the image is not empty
         '''
         if self.img_indicator == '':
-            print('No image to publish')
+            ropy.logwarn('No image to publish')
+            #print('No image to publish')
         elif self.img_indicator == 'gray':
             try:
                 self.img_pub.publish(self.bridge.cv2_to_imgmsg(self.img, 'mono8'))
-                print('Line image published')
+                #print('Line image published')
             except CvBrdigeError as e:
+                rospy.logerr(e)
                 print(e)
         elif self.img_indicator == 'color':
             try:
                 self.img_pub.publish(self.bridge.cv2_to_imgmsg(self.img, 'bgr8'))
-                print('Line image published')
+                #print('Line image published')
             except CvBrdigeError as e:
+                rospy.logerr(e)
                 print(e)
         else:
-            print('Something is wrong with line image indicator')
+            rospy.logerr('Something is wrong with the line image indicator')
+            #print('Something is wrong with line image indicator')
 
         return
 
@@ -700,15 +736,18 @@ def main():
     line_processor.set_param(threshold, width_line, width_gain, arrow_scale)
     while line_processor.param_update == False:
         line_processor.set_param(threshold, width_line, width_gain, arrow_scale)
-        print('Parameters were not set correctly. Shutting down')
+        rospy.logfatal('Parameters were not set correctly')
+        #print('Parameters were not set correctly. Shutting down')
         #return
     set_checkerboard_data_check = line_processor.set_checkerboard_data(num_horizontal_checkerboard_corners, num_vertical_checkerboard_corners, square_size, car_body_frame_to_board)
     while set_checkerboard_data_check == False:
         set_checkerboard_data_check = line_processor.set_checkerboard_data(num_horizontal_checkerboard_corners, num_vertical_checkerboard_corners, square_size, car_body_frame_to_board)
-        print('Checkerboard data incorrect. Shutting down')
+        rospy.logfatal('Checkerboard data incorrect. Shutting down')
+        #print('Checkerboard data incorrect. Shutting down')
         #return
     while line_processor.corners_from_file == []: # get the outer corners as found by the image_preprocessing node
-        print('Trying to get the corners of the checkerboard')
+        rospy.logwarn('Trying to find the corners of the checkerboard')
+        #print('Trying to get the corners of the checkerboard')
         line_processor.load_cornersTXT_data(path)
     try:
         while not rospy.is_shutdown():
@@ -719,8 +758,8 @@ def main():
             # map data to car body frame
             # publish line center and orientation
             #####END#####
-            print('sq: ', square_size)
-            print('line_processor.sq: ', line_processor.square_size)
+            #print('sq: ', square_size)
+            #print('line_processor.sq: ', line_processor.square_size)
             # get an image of the line
             line_img = line_fetcher.get_img()
             line_img_indicator = line_fetcher.get_img_indicator()
@@ -743,20 +782,24 @@ def main():
                         arrowed_img_publisher.publish_img()
 
                 else:
-                    print('Line data not found')
+                    #print('Line data not found')
+                    rospy.logerr('Line data not found')
             else:
-                print('Image not imported')
+                #print('Image not imported')
+                rospy.logerr('Image not imported')
 
             rate.sleep()
 
     except KeyboardInterrupt:
-        print("Shutting down")
+        #print("Shutting down")
+        rospy.logfatal("Keyboard Interrupt. Shutting down process_line node")
     #cv2.destroyAllWindows()
 
 if __name__ == '__main__':
     try:
         main()
     except rospy.ROSInterruptException:
+        rospy.logfatal("ROS Interrupt. Shutting down process_line node")
         pass
 
 #

@@ -542,23 +542,28 @@ def main():
     set_checkerboard_size_check = divider.set_checkerboard_size(num_checkerboard_horizontal_corners, num_checkerboard_vertical_corners) # set checkerboard size
     if set_checkerboard_size_check == False: # could not set image mode
         #print('checkerboard size incorrect. Shutting down.')
+        rospy.logfatal('Checkerboard size incorrect')
         return
     set_path_to_corners_check = divider.set_path_to_corners(path) # set path to corners.txt
     if set_path_to_corners_check == False: # could not set path to file
         #print('Incorrect path to corners.txt. Shutting down.')
+        rospy.logfatal('Incorrect path to corners.txt')
         return
     load_cornersTXT_data_check = divider.load_cornersTXT_data() # load data from corners.txt
     if load_cornersTXT_data_check == False:
         #print('Incorrect path to corners.txt. Shutting down.')
+        rospy.logerr('Failed to load data from corners.txt')
         return
     decision = divider.get_corner_origin_decision() # get decision on whether to load or calculate corners
     if decision == -1: # no decision could be made even though all necesary steps were taken
+        rospy.logwarn('Decision about loading corners or calculating them has not been made')
         #print('No decision made. Shutting down.')
         return
     if decision == 'file':
         populate_outer_corners_from_file_check = divider.populate_outer_corners_from_file()
         if populate_outer_corners_from_file_check == False:
             #print('Failed to load corners correctly. Shutting down') # could not load corners even though all necesary steps were taken
+            rospy.logerr('Failed to load corners corretly')
             return
     # if decision was to calculate new corners, that cannot be started yet
 
@@ -584,7 +589,8 @@ def main():
             #    print(len(img_raw_indicator))
             #print('comparison between indicator and color and gray', (img_raw_indicator != 'color') & (img_raw_indicator != 'gray'))
             if ((img_raw_indicator == -1) | (img_raw == [])): # there is no image
-                print('No image, skippin rest of cycle')
+                #print('No image, skipping rest of cycle')
+                rospy.logwarn("No image yet.")
             else: # image exists
                 # send image to divider
                 divider.import_img_raw(img_raw, img_raw_indicator) # import raw image to divider
@@ -613,12 +619,13 @@ def main():
                         # publish images
                         publisher.publish_line_img()
                         publisher.publish_forward_img()
-                        print("Images published")
+                        #print("Images published")
 
             rate.sleep()
 
     except KeyboardInterrupt:
         print("Shutting down")
+        rospy.logfatal("Keyboard Interrupt. Shutting down image_preprocessing node")
     #cv2.destroyAllWindows()
 
 
@@ -626,4 +633,5 @@ if __name__ == '__main__':
     try:
         main()
     except rospy.ROSInterruptException:
+        rospy.logfatal("ROS Interrupt. Shutting down image_preprocessing node")
         pass

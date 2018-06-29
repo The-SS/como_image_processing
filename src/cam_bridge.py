@@ -33,7 +33,8 @@ class ImagePublisher:
 
     def get_img(self, cam, img_mode):
         if ((img_mode != 'color') & (img_mode != 'gray')) :
-            print('Image mode not valid')
+            #print('Image mode not valid')
+            rospy.logfatal('Image mode not valid')
             return
         ret, self.cam_image_raw = cam.read() #fetch raw camera image
         if ret:
@@ -45,6 +46,7 @@ class ImagePublisher:
                     self.cam_pub.publish(self.bridge.cv2_to_imgmsg(img_gray, "mono8")) # publish grayscale image
             except CvBridgeError as e:
                 print(e)
+                rospy.logerr(e)
 
 
 
@@ -72,10 +74,12 @@ def main():
             ip.get_img(cam, image_mode) #get image
             rate.sleep() #sleep for rest of time
     except KeyboardInterrupt:
-        print("shutting down ros")
+        #print("shutting down ros")
+        rospy.logfatal("Keyboard Interrupt. Shutting down cam_bridge node")
 
 if __name__ == '__main__':
     try:
         main()
     except rospy.ROSInterruptException:
+        rospy.logfatal("ROS Interrupt. Shutting down cam_bridge node")
         pass
