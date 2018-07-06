@@ -1,6 +1,6 @@
 imgMode: 'gray' # 'color' or 'gray'
 
-camPath: "/dev/video6"
+camPath: "/dev/video0"
 
 resolution:
   width: 640
