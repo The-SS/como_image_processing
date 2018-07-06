@@ -499,7 +499,7 @@ class lineProcessor:
             #print('File indicates that corner data cannot be used.')
             self.corners_from_file = []
             return False
-            
+
         rospy.loginfo('Importing data from file')
         #print('Importing data from file')
         self.corners_from_file = data # data is a list of lists. 5*2
@@ -751,7 +751,7 @@ def main():
         line_processor.load_cornersTXT_data(path)
     try:
         while not rospy.is_shutdown():
-            #####Sudo code for section#####
+            #####Pseudo code for section#####
             # get an image of the line
             # send it to the line processor
             # process the line to find center and orientation

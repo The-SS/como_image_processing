@@ -570,7 +570,7 @@ def main():
     # start main image preprocessing loop
     try:
         while not rospy.is_shutdown():
-            #####Sudo code for section#####
+            #####Pseudo code for section#####
             # get a new image
             # send image to divider
             # if still not calculated, find corners from image
