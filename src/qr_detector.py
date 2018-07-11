@@ -124,9 +124,9 @@ def getSlope(A, B):
     dy = B[1] - A[1]
     if (dx != 0):
         m = dy/float(dx)
-        return m,1
+        return m
     else:
-        return 0.0,0
+        return 0.0
 
 def updateCorner(point, ref, current_max, current_vrtx):
     temp_dist = getEuclideanDistance(point, ref)
@@ -161,7 +161,6 @@ def getVertices(contours, c_id, slope):
 
     if (slope > 5 or slope < -5):
         for i in contours[c_id]:
-
             pd1 = distanceFromLine(C, A, i)
             pd2 = distanceFromLine(B, D, i)
 
@@ -189,48 +188,22 @@ def getVertices(contours, c_id, slope):
 
     return [M0, M1, M2, M3]
 
-def updateCornerOr(orientation, IN, CV_LIST):
-    if (orientation == CV_LIST[0]):
-        M0 = IN[0]
-        M1 = IN[1]
-        M2 = IN[2]
-        M3 = IN[3]
-    elif (orientation == CV_LIST[1]):
-        M0 = IN[1]
-        M1 = IN[2]
-        M2 = IN[3]
-        M3 = IN[0]
-    elif (orientation == CV_LIST[2]):
-        M0 = IN[2]
-        M1 = IN[3]
-        M2 = IN[0]
-        M3 = IN[1]
-    elif (orientation == CV_LIST[3]):
-        M0 = IN[3]
-        M1 = IN[0]
-        M2 = IN[1]
-        M3 = IN[2]
-
-    return [M0, M1, M2, M3]
-
 def getIntersectionPoint(a1, a2, b1, b2):
 	intersection = [0, 0]
-	r = np.subtract(a2, a1)
-	s = np.subtract(b2, b1)
-
-	if (np.cross(r,s) == 0):
-	  	return False, intersection
-	
-	ma = (float(a2[1]) - a1[1]) / (a2[0] - a1[0])
 	mb = (float(b2[1]) - b1[1]) / (b2[0] - b1[0])
-	ba = a1[1] - ma * a1[0]
 	bb = b1[1] - mb * b1[0]
 
-	intersection[0] = np.absolute((bb - ba)/(mb - ma))
-	intersection[1] = int(np.absolute(ma * intersection[0] + ba))
-	intersection[0] = int(intersection[0])
-
-	return True, intersection
+	try:
+		ma = (float(a2[1]) - a1[1]) / (a2[0] - a1[0])
+	except ZeroDivisionError:
+		intersection[0] = a1[0]
+	else:
+		ba = a1[1] - ma * a1[0]
+		intersection[0] = np.absolute((bb - ba)/(mb - ma))
+	finally:
+		intersection[1] = int(np.absolute(mb * intersection[0] + bb))
+		intersection[0] = int(intersection[0])
+		return intersection
 
 def cross(v1, v2):
     cross = v1[0] * v2[1] - v1[1] * v2[0]
@@ -247,13 +220,6 @@ def main():
 	set_expected_img_mode_check = fetcher.set_expected_img_mode(img_mode)
 	if set_expected_img_mode_check == False:
 		return
-
-	CV_QR_NORTH = 0
-	CV_QR_EAST = 1
-	CV_QR_SOUTH = 2
-	CV_QR_WEST = 3
-	CV_LIST = [0, 1, 2, 3]
-
 	try:
 		while not rospy.is_shutdown():
 			img_frwd = fetcher.get_img_frwd()
@@ -310,71 +276,59 @@ def main():
 						    elif(mark == 2):
 						        C = x
 						    mark += 1
+
 				if (mark >= 3):
 					AB = getEuclideanDistance(centroids[A], centroids[B])
 					BC = getEuclideanDistance(centroids[B], centroids[C])
 					CA = getEuclideanDistance(centroids[C], centroids[A])
 
 					if (AB > BC and AB > CA):
-						outlier = C
-						median1 = A
-						median2 = B
+						top = C
+						if (centroids[A][0] < centroids[B][0]):
+							bottom = A
+							right = B
+						else:
+							bottom = B
+							right = A					
 					elif (CA > AB and CA > BC):
-						outlier = B
-						median1 = A
-						median2 = C
+						top = B
+						if (centroids[A][0] < centroids[C][0]):
+							bottom = A
+							right = C
+						else:
+							bottom = C
+							right = A
 					else:
-						outlier = A
-						median1 = B
-						median2 = C
+						top = A
+						if (centroids[C][0] < centroids[B][0]):
+							bottom = C
+							right = B
+						else:
+							bottom = B
+							right = C	
 
-					top = outlier;
-					dist = distanceFromLine(centroids[median1], centroids[median2], centroids[outlier])
-					slope, align = getSlope(centroids[median1], centroids[median2])
+					dist = distanceFromLine(centroids[bottom], centroids[right], centroids[top])
+					slope = getSlope(centroids[bottom], centroids[right])
 
 					src = np.array([[0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0]], dtype = "float32")
 					dst = np.array([[0.0, 0.0], [100.0, 0.0], [100.0, 100.0], [0.0, 100.0]], dtype = "float32")
 
-					if (align == 0):
-						bottom = median1
-						right = median2
-					elif (slope < 0 and dist < 0):
-						bottom = median1
-						right = median2
-						orientation = CV_QR_NORTH
-					elif (slope > 0 and dist < 0):
-						bottom = median2
-						right = median1
-						orientation = CV_QR_EAST
-					elif (slope < 0 and dist > 0):
-						bottom = median2
-						right = median1
-						orientation = CV_QR_SOUTH
-					elif (slope > 0 and dist > 0):
-						bottom = median1
-						right = median2
-						orientation = CV_QR_WEST
-
 					if (top < len(contours) and right < len(contours) and bottom < len(contours) and cv2.contourArea(contours[top]) > 10 and cv2.contourArea(contours[right]) > 10 and cv2.contourArea(contours[bottom]) > 10):
-						tempL = getVertices(contours, top, slope)
-						tempM = getVertices(contours, right, slope)
-						tempO = getVertices(contours, bottom, slope)
+						L = getVertices(contours, top, slope)
+						M = getVertices(contours, right, slope)
+						O = getVertices(contours, bottom, slope)
 
-						L = updateCornerOr(orientation, tempL, CV_LIST)
-						M = updateCornerOr(orientation, tempM, CV_LIST)
-						O = updateCornerOr(orientation, tempO, CV_LIST)
-						iflag, N = getIntersectionPoint(M[1][0], M[2][0], O[3][0], O[2][0])
+						N = getIntersectionPoint(M[1][0], M[2][0], O[3][0], O[2][0])
 
 						src[0] = L[0][0]
 						src[1] = M[1][0]
 						src[2] = N
 						src[3] = O[3][0]
 
-						if (len(src) == 4 and len(dst) == 4):
-							warp_matrix = cv2.getPerspectiveTransform(src, dst)
-							qr_img = cv2.warpPerspective(img_frwd, warp_matrix, (100, 100))
-							publisher.import_qr_img(qr_img, img_frwd_indicator)
-							publisher.publish_qr_img()
+						warp_matrix = cv2.getPerspectiveTransform(src, dst)
+						qr_img = cv2.warpPerspective(img_frwd, warp_matrix, (100, 100))
+						publisher.import_qr_img(qr_img, img_frwd_indicator)
+						publisher.publish_qr_img()
 			rate.sleep()	
 	except KeyboardInterrupt:
 		print ("Shutting down")
