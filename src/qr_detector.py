@@ -114,9 +114,6 @@ def distanceFromLine(L, M, J):
 
     pdist = (a * J[0] + (b * J[1]) + c) / np.sqrt((a * a) + (b*b))
     return pdist
-    # A21 = np.subtract(A2, A1)
-    # A1B = np.subtract(A1, B)
-    # return np.linalg.norm(np.cross(A21, A1B))/np.linalg.norm(A21)
 
 #Two points are passed into this function. The function returns the slope
 #of the line created by the two points or zero if the two points are
@@ -125,7 +122,7 @@ def distanceFromLine(L, M, J):
 def getSlope(A, B):
     dx = B[0] - A[0]
     dy = B[1] - A[1]
-    if (dy != 0):
+    if (dx != 0):
         m = dy/float(dx)
         return m,1
     else:
@@ -217,18 +214,23 @@ def updateCornerOr(orientation, IN, CV_LIST):
     return [M0, M1, M2, M3]
 
 def getIntersectionPoint(a1, a2, b1, b2):
-    intersection = [0, 0]
-    p = a1
-    q = b1
-    r = np.subtract(a2, a1)
-    s = np.subtract(b2, b1)
+	intersection = [0, 0]
+	r = np.subtract(a2, a1)
+	s = np.subtract(b2, b1)
 
-    if (np.cross(r,s) == 0):
-        return False, intersection
+	if (np.cross(r,s) == 0):
+	  	return False, intersection
+	
+	ma = (float(a2[1]) - a1[1]) / (a2[0] - a1[0])
+	mb = (float(b2[1]) - b1[1]) / (b2[0] - b1[0])
+	ba = a1[1] - ma * a1[0]
+	bb = b1[1] - mb * b1[0]
 
-    t = np.cross(np.subtract(q, p), s)/np.cross(r,s)
-    intersection = p + t*r
-    return True, intersection
+	intersection[0] = np.absolute((bb - ba)/(mb - ma))
+	intersection[1] = int(np.absolute(ma * intersection[0] + ba))
+	intersection[0] = int(intersection[0])
+
+	return True, intersection
 
 def cross(v1, v2):
     cross = v1[0] * v2[1] - v1[1] * v2[0]
@@ -263,6 +265,8 @@ def main():
 				if (img_mode == 'color'):
 					img_frwd = cv2.cvtColor(img_frwd, cv2.COLOR_BGR2GRAY)
 
+				blurred_img = cv2.GaussianBlur(img_frwd, (3,3), 0)
+				ret, thresh_img = cv2.threshold(blurred_img, 127, 255, cv2.THRESH_BINARY)
 				canny_img = cv2.Canny(img_frwd, 100, 200)
 				cont_img, contours, hierarchy = cv2.findContours(canny_img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 				mark = 0

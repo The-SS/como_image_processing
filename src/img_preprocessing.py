@@ -524,7 +524,8 @@ def main():
 
     num_checkerboard_horizontal_corners = rospy.get_param(nodename + "/CheckerboardParams" + "/num_internal_checkerboard_corners_horizontally")
     num_checkerboard_vertical_corners = rospy.get_param(nodename + "/CheckerboardParams" + "/num_internal_checkerboard_corners_vertically")
-    path = rospy.get_param(nodename + "/path_to_corners")
+    #path = rospy.get_param(nodename + "/path_to_corners")
+    path = "/home/odroid/catkin_ws/src/como_image_processing/config"
     img_mode = rospy.get_param('/cam_bridge' + "/imgMode")
 
     # create objects
