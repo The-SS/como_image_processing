@@ -17,7 +17,9 @@
 	</node>
 
 	<!-- Start the QR detector-->
-	<node pkg = "como_image_processing" type = "qr_detector.py" name = "qr_detector" output = "screen" respawn = "true"/>
+	<node pkg = "como_image_processing" type = "qr_detector.py" name = "qr_detector" output = "screen" respawn = "true">
+		<rosparam command = "load" file = "$(find como_image_processing)/config/qr_detector_params.yml"/>
+	</node>
 </launch>
 
 

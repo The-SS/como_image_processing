@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 '''
-This script performs three main tasks after loading an image. It first
-detects a QR code within the image, then determines the lateral distance the code
-is located from the camera. Finally, it decodes the QR code.
+This QR detection algorithm is intended to be used in the ROS environment on UTD's autonomous vehicle project, project Como. 
+The project is helmed by students Sleiman Safaoui and Kevin Daniel under Dr. Tyler Summers.
+This particular script subscribes to a ROS node containing an Image. 
+The QR code is detected within the image, and the distance between the code and camera is detected. 
+Finally, it publishes both the warped QR code and calculated distance.
 Written by Kevin Daniel, May 30, 2018. Code written using QR detection methods
 implemented by Bharath Prabhuswamy.
 https://github.com/bharathp666/opencv_qr
@@ -19,9 +21,13 @@ import math
 import rospy
 import roslib
 from sensor_msgs.msg import Image
+from std_msgs.msg import Float32
 from cv_bridge import CvBridge, CvBridgeError
 
-
+#The ImgFetcher class is responsible for subscribing to the appropriate node containing the forward image.
+#Dependent on the image indicator specified in the cam_bridge config file, the fetcher will know
+#to grab a gray or color image. The class also contains functions to obtain internal data such as
+#the forward image and image indicator.
 class ImgFetcher:
 	def __init__(self):
 		self.bridge = CvBridge()
@@ -68,6 +74,25 @@ class ImgFetcher:
 	def get_img_frwd(self):
 		return self.img_frwd
 
+#The DistPublisher class is responsible for calculating and publishing the distance between
+#the QR code and the camera to the appropriate node.
+class DistPublisher:
+	def __init__(self):
+		self.qr_distance = 0.0
+		self.qr_distance_pub = rospy.Publisher("/qr/distance", Float32, queue_size = 1)
+
+	def calculate_distance(self, Ly, My, Ny, Oy, side_length, focal_length):
+		A = (Ly + My) / 2;		
+		B = (Ny + Oy) / 2;
+
+		pixels = B - A
+		dist = side_length / pixels * focal_length
+		return dist
+
+	def publish_qr_distance(self, distance):
+		self.qr_distance_pub.publish(distance)
+
+#The ImgPublisher class is responsible for publishing the warped warped QR code.
 class  ImgPublisher:
 	def __init__(self):
 		self.bridge = CvBridge()
@@ -103,17 +128,6 @@ class  ImgPublisher:
 def getEuclideanDistance(P, Q):
     D = np.subtract(P, Q)
     return np.linalg.norm(D)
-
-#This function takes in three points. Using vector norms and cross products,
-#it is able to calculate the shortest distance between the third point and
-#the line created by the first two. It returns this minimum distance.
-def distanceFromLine(L, M, J):
-    a = -((M[1] - L[1]) / (M[0] - L[0]))
-    b = 1.0
-    c = ((M[1] - L[1]) / (M[0] - L[0])) * L[0]- L[1]
-
-    pdist = (a * J[0] + (b * J[1]) + c) / np.sqrt((a * a) + (b*b))
-    return pdist
 
 #Two points are passed into this function. The function returns the slope
 #of the line created by the two points or zero if the two points are
@@ -210,12 +224,19 @@ def cross(v1, v2):
     return cross
 
 def main():
+	qr_dist = 0.0
 	rospy.init_node("qr_detector", anonymous = True)
 	rate = rospy.Rate(30)
 
+	nodename = "/qr_detector"
+
+	side_length = rospy.get_param(nodename + "/side_length")
 	img_mode = rospy.get_param('/cam_bridge/imgMode')
+	focal_length = rospy.get_param(nodename + "/focal_length")
+
 	fetcher = ImgFetcher()
 	publisher = ImgPublisher()
+	distPublisher = DistPublisher()
 
 	set_expected_img_mode_check = fetcher.set_expected_img_mode(img_mode)
 	if set_expected_img_mode_check == False:
@@ -307,7 +328,6 @@ def main():
 							bottom = B
 							right = C	
 
-					dist = distanceFromLine(centroids[bottom], centroids[right], centroids[top])
 					slope = getSlope(centroids[bottom], centroids[right])
 
 					src = np.array([[0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0]], dtype = "float32")
@@ -324,11 +344,14 @@ def main():
 						src[1] = M[1][0]
 						src[2] = N
 						src[3] = O[3][0]
-
+						
 						warp_matrix = cv2.getPerspectiveTransform(src, dst)
 						qr_img = cv2.warpPerspective(img_frwd, warp_matrix, (100, 100))
 						publisher.import_qr_img(qr_img, img_frwd_indicator)
 						publisher.publish_qr_img()
+
+						qr_dist = distPublisher.calculate_distance(L[0][0][1], M[1][0][1], N[1], O[3][0][1], side_length, focal_length)
+						distPublisher.publish_qr_distance(qr_dist)
 			rate.sleep()	
 	except KeyboardInterrupt:
 		print ("Shutting down")
